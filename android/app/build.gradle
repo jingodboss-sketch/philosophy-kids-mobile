@@ -1,0 +1,93 @@
+apply plugin: 'com.android.application'
+
+android {
+    namespace = "com.philosophy.kids"
+    compileSdk = rootProject.ext.compileSdkVersion
+    
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_17
+        targetCompatibility JavaVersion.VERSION_17
+    }
+    
+    defaultConfig {
+        applicationId "com.philosophy.kids"
+        minSdkVersion rootProject.ext.minSdkVersion
+        targetSdkVersion rootProject.ext.targetSdkVersion
+        versionCode 1
+        versionName "1.0"
+        testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
+        aaptOptions {
+             // Files and dirs to omit from the packaged assets dir, modified to accommodate modern web apps.
+             // Default: https://android.googlesource.com/platform/frameworks/base/+/282e181b58cf72b6ca770dc7ca5f91f135444502/tools/aapt/AaptAssets.cpp#61
+            ignoreAssetsPattern = '!.svn:!.git:!.ds_store:!*.scc:.*:!CVS:!thumbs.db:!picasa.ini:!*~'
+        }
+        androidResources {
+            noCompress 'js', 'css', 'html', 'json'
+        }
+    }
+    buildTypes {
+        release {
+            minifyEnabled false
+            proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
+        }
+    }
+}
+
+repositories {
+    flatDir{
+        dirs '../capacitor-cordova-android-plugins/src/main/libs', 'libs'
+    }
+}
+
+dependencies {
+    implementation fileTree(include: ['*.jar'], dir: 'libs')
+    implementation "androidx.appcompat:appcompat:$androidxAppCompatVersion"
+    implementation "androidx.coordinatorlayout:coordinatorlayout:$androidxCoordinatorLayoutVersion"
+    implementation "androidx.core:core-splashscreen:$coreSplashScreenVersion"
+    implementation project(':capacitor-android')
+    testImplementation "junit:junit:$junitVersion"
+    androidTestImplementation "androidx.test.ext:junit:$androidxJunitVersion"
+    androidTestImplementation "androidx.test.espresso:espresso-core:$androidxEspressoCoreVersion"
+    implementation project(':capacitor-cordova-android-plugins')
+    
+    // Fix Kotlin duplicate classes
+    implementation("org.jetbrains.kotlin:kotlin-stdlib:1.8.22")
+    implementation("org.jetbrains.kotlin:kotlin-stdlib-jdk7:1.8.22")
+    implementation("org.jetbrains.kotlin:kotlin-stdlib-jdk8:1.8.22")
+}
+
+apply from: 'capacitor.build.gradle'
+
+try {
+    def servicesJSON = file('google-services.json')
+    if (servicesJSON.text) {
+        apply plugin: 'com.google.gms.google-services'
+    }
+} catch(Exception e) {
+    logger.info("google-services.json not found, google-services plugin not applied. Push Notifications won't work")
+}
+
+// Fix Windows AAPT2 stableIds.txt issue
+tasks.whenTaskAdded { task ->
+    if (task.name.contains('processDebugResources') || task.name.contains('processReleaseResources')) {
+        task.doFirst {
+            // 确保目录存在，并创建空的 stableIds.txt 防止 AAPT2 报错
+            def suffix = task.name.replace('process', '').toLowerCase()
+            def stableIdsDir = new File(task.project.buildDir, "intermediates/stable_resource_ids_file/${suffix}")
+            stableIdsDir.mkdirs()
+            def stableIdsFile = new File(stableIdsDir, "stableIds.txt")
+            if (!stableIdsFile.exists()) {
+                stableIdsFile.createNewFile()
+            }
+        }
+    }
+    // 修复 Windows mergeDebugAssets 文件锁定问题
+    if (task.name == 'mergeDebugAssets' || task.name == 'mergeReleaseAssets') {
+        // 让 mergeDebugAssets 依赖 packageDebugAssets，确保顺序正确
+        def packageTaskName = task.name.replace('merge', 'package')
+        def packageTask = task.project.tasks.findByName(packageTaskName)
+        if (packageTask && !task.dependsOn.contains(packageTask)) {
+            task.mustRunAfter(packageTask)
+        }
+    }
+}
