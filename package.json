@@ -1,0 +1,18 @@
+{
+  "name": "philosophy-kids-mobile",
+  "version": "1.0.0",
+  "main": "index.html",
+  "scripts": {
+    "start": "npx serve dist",
+    "build": "node build.js",
+    "sync": "npx cap sync",
+    "android": "npx cap open android"
+  },
+  "dependencies": {
+    "@capacitor/android": "^6.2.0",
+    "@capacitor/cli": "^6.2.0",
+    "@capacitor/core": "^6.2.0",
+    "@capacitor/splash-screen": "^6.0.3"
+  },
+  "devDependencies": {}
+}

@@ -1,0 +1,24 @@
+{
+  "expo": {
+    "name": "小小哲学家",
+    "slug": "philosophy-kids",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "icon": "./assets/icon.png",
+    "userInterfaceStyle": "light",
+    "splash": {
+      "backgroundColor": "#FFF9F0"
+    },
+    "android": {
+      "package": "com.philosophy.kids",
+      "versionCode": 1,
+      "adaptiveIcon": {
+        "backgroundColor": "#FFF9F0"
+      },
+      "permissions": []
+    },
+    "web": {
+      "favicon": "./assets/favicon.png"
+    }
+  }
+}
